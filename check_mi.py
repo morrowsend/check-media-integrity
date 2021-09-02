@@ -21,6 +21,7 @@ from wand.image import Image as ImageW
 import PyPDF2
 import csv
 import ffmpeg
+import pyheif
 import filetype
 import argparse
 from subprocess import Popen, PIPE
@@ -39,6 +40,8 @@ PIL_EXTENSIONS = ['jpg', 'jpeg', 'jpe', 'png', 'bmp', 'gif', 'pcd', 'tif', 'tiff
 PIL_EXTRA_EXTENSIONS = ['eps', 'ico', 'im', 'pcx', 'ppm', 'sgi', 'spider', 'xbm', 'tga']
 
 MAGICK_EXTENSIONS = ['psd', 'xcf']
+
+HEIF_EXTENSIONS = ['heic', 'avif', 'heif']
 
 PDF_EXTENSIONS = ['pdf']
 
@@ -154,6 +157,7 @@ def setup(configuration):
         MEDIA_EXTENSIONS += PIL_EXTENSIONS
         if enable_extra:
             MEDIA_EXTENSIONS += MAGICK_EXTENSIONS
+            MEDIA_EXTENSIONS += HEIF_EXTENSIONS
 
     if enable_pdf:
         MEDIA_EXTENSIONS += PDF_EXTENSIONS
@@ -205,6 +209,10 @@ def magick_identify_check(filename):
     if exitcode != 0:
         raise Exception('Identify error:' + str(exitcode))
     return out
+
+
+def heif_check(filename):
+    pyheif.read_heif(filename)
 
 
 def pypdf_check(filename):
@@ -348,6 +356,9 @@ def check_file(filename, error_detect='default', strict_level=0, zero_detect=0, 
                 magick_check(filename)
             if strict_level in [0, 2]:
                 magick_identify_check(filename)
+
+        if file_ext in HEIF_EXTENSIONS:
+            heif_check(filename)
 
         if file_ext in VIDEO_EXTENSIONS:
             ffmpeg_check(filename, error_detect=error_detect, threads=ffmpeg_threads)
