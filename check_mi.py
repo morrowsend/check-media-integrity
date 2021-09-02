@@ -21,6 +21,7 @@ from wand.image import Image as ImageW
 import PyPDF2
 import csv
 import ffmpeg
+import filetype
 import argparse
 from subprocess import Popen, PIPE
 
@@ -46,6 +47,23 @@ VIDEO_EXTENSIONS = ['avi', 'mp4', 'mov', 'mpeg', 'mpg', 'm2p', 'mkv', '3gp', 'og
 AUDIO_EXTENSIONS = ['mp3', 'mp2']
 
 MEDIA_EXTENSIONS = []
+
+EXTENSION_MIMETYPES = {
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'tif': 'image/tiff',
+    'tiff': 'image/tiff',
+    'psd': 'image/vnd.adobe.photoshop',
+    'heic': 'image/heic',
+    'mov': 'video/quicktime',
+    'mp4': 'video/mp4',
+    'mp3': 'audio/mpeg',
+    'm4a': 'audio/m4a',
+    'wav': 'audio/wav',
+    'pdf': 'application/pdf',
+}
 
 CONFIG = None
 
@@ -142,6 +160,14 @@ def setup(configuration):
 
     if enable_media:
         MEDIA_EXTENSIONS += VIDEO_EXTENSIONS + AUDIO_EXTENSIONS
+
+
+def check_filetype(filename):
+    file_lowercase = filename.lower()
+    file_ext = os.path.splitext(file_lowercase)[1][1:]
+    file_type = filetype.guess(filename).mime
+    if file_ext in EXTENSION_MIMETYPES and file_type != EXTENSION_MIMETYPES[file_ext]:
+        raise Exception('Bad file type: expected: '+EXTENSION_MIMETYPES[file_ext]+', got: '+file_type)
 
 
 def pil_check(filename):
@@ -300,6 +326,8 @@ def check_file(filename, error_detect='default', strict_level=0, zero_detect=0, 
 
     try:
         file_size = check_size(filename)
+        check_filetype(filename)
+
         if zero_detect > 0:
             check_zeros(filename, CONFIG.zero_detect)
 
