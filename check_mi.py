@@ -25,6 +25,8 @@ import pyheif
 import filetype
 import argparse
 from subprocess import Popen, PIPE
+import signal
+import psutil
 
 LICENSE = "Copyright (C) 2018  Fabiano Tarlao.\nThis program comes with ABSOLUTELY NO WARRANTY.\n" \
           "This is free software, and you are welcome to redistribute it under GPL3 license conditions"
@@ -378,12 +380,34 @@ def log_check_outcome(check_outcome_detail):
         1], ", size[bytes]:", check_outcome_detail[2])
 
 
+def kill_child_processes(parent_pid, sig=signal.SIGTERM):
+    try:
+        parent = psutil.Process(parent_pid)
+    except psutil.NoSuchProcess:
+        return
+    children = parent.children(recursive=True)
+    for process in children:
+        process.send_signal(sig)
+
+
+def subworker(filename, out_queue, CONFIG):
+    is_success = check_file(filename, CONFIG.error_detect, strict_level=CONFIG.strict_level, zero_detect=CONFIG.zero_detect)
+    out_queue.put(is_success)
+
+
 def worker(in_queue, out_queue, CONFIG):
     try:
         while True:
             full_filename = in_queue.get(block=True, timeout=2)
-            is_success = check_file(full_filename, CONFIG.error_detect, strict_level=CONFIG.strict_level, zero_detect=CONFIG.zero_detect)
-            out_queue.put(is_success)
+            p = Process(target=subworker, args=(full_filename, out_queue, CONFIG))
+            p.start()
+            p.join(CONFIG.timeout)
+            if p.exitcode is None:
+                kill_child_processes(p.pid)
+                p.terminate()
+                statfile = os.stat(full_filename)
+                filesize = statfile.st_size
+                out_queue.put((False, (full_filename, "Timed out", filesize)))
     except Empty:
         print("Closing parallel worker, the worker has no more tasks to perform")
         return
@@ -459,7 +483,7 @@ def main():
 
             count += 1
 
-            is_success = out_queue.get(block=True, timeout=CONFIG.timeout)
+            is_success = out_queue.get(block=True, timeout=CONFIG.timeout+2)
             file_size = is_success[1][2]
             if file_size != 'NA':
                 total_file_size += file_size
