@@ -447,6 +447,8 @@ def main():
         if not CONFIG.is_recurse:
             break  # we only check the root folder
 
+    print("Checking "+str(pre_count)+" files")
+
     for i in range(CONFIG.threads):
         p = Process(target=worker, args=(task_queue, out_queue, CONFIG))
         p.start()
