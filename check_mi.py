@@ -142,6 +142,7 @@ def arg_parser():
 
     parse_out = parser.parse_args()
     parse_out.enable_csv = parse_out.csv_filename is not None
+    parse_out.timeout = parse_out.timeout if parse_out.timeout > 0 else None
     return parse_out
 
 
@@ -483,7 +484,7 @@ def main():
 
             count += 1
 
-            is_success = out_queue.get(block=True, timeout=CONFIG.timeout+2)
+            is_success = out_queue.get(block=True, timeout=CONFIG.timeout+2 if CONFIG.timeout else None)
             file_size = is_success[1][2]
             if file_size != 'NA':
                 total_file_size += file_size
