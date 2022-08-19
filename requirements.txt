@@ -1,6 +1,16 @@
 ffmpeg-python
 future
-Pillow-SIMD
+Pillow-SIMD ; platform_machine=="i386"
+Pillow-SIMD ; platform_machine=="x86"
+Pillow-SIMD ; platform_machine=="x64"
+Pillow-SIMD ; platform_machine=="x86_64"
+Pillow ; platform_machine=="arm"
+Pillow ; platform_machine=="arm32"
+Pillow ; platform_machine=="armv7l"
+Pillow ; platform_machine=="aarch64"
+Pillow ; platform_machine=="armv8b"
+Pillow ; platform_machine=="armv8l"
+Pillow ; platform_machine=="arm64"
 PyPDF2
 Wand
 filetype
