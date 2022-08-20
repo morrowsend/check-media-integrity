@@ -24,9 +24,11 @@ import ffmpeg
 import pyheif
 import filetype
 import argparse
+from argparse import Namespace
 from subprocess import Popen, PIPE
 import signal
 import psutil
+from tqdm import tqdm
 
 LICENSE = "Copyright (C) 2018  Fabiano Tarlao.\nThis program comes with ABSOLUTELY NO WARRANTY.\n" \
           "This is free software, and you are welcome to redistribute it under GPL3 license conditions"
@@ -333,7 +335,7 @@ def check_file(filename, error_detect='default', strict_level=0, zero_detect=0, 
     file_lowercase = filename.lower()
     file_ext = os.path.splitext(file_lowercase)[1][1:]
 
-    file_size = 'NA'
+    file_size = 0
 
     try:
         file_size = check_size(filename)
@@ -399,7 +401,7 @@ def subworker(filename, out_queue, CONFIG):
 def worker(in_queue, out_queue, CONFIG):
     try:
         while True:
-            full_filename = in_queue.get(block=True, timeout=2)
+            full_filename = in_queue.get(block=True, timeout=0.05)
             p = Process(target=subworker, args=(full_filename, out_queue, CONFIG))
             p.start()
             p.join(CONFIG.timeout)
@@ -410,11 +412,95 @@ def worker(in_queue, out_queue, CONFIG):
                 filesize = statfile.st_size
                 out_queue.put((False, (full_filename, "Timed out", filesize)))
     except Empty:
-        print("Closing parallel worker, the worker has no more tasks to perform")
         return
     except Exception as e:
-        print("Parallel worker got unexpected error", str(e))
+        print("Parallel worker got unexpected error", str(e), file=sys.stderr)
         sys.exit(1)
+
+
+def check_files(
+        files,
+        timeout=120,
+        threads=1,
+        zero_detect=0,
+        error_detect='default',
+        strict_level=1,
+        image=True,
+        media=True,
+        pdf=True,
+        extra=True,
+):
+    # initializations
+    count = 0
+    count_bad = 0
+    total_file_size = 0
+    bad_files = {}
+    CONFIG = Namespace(
+        timeout=timeout,
+        threads=threads,
+        zero_detect=zero_detect,
+        error_detect=error_detect,
+        strict_level=strict_level,
+        is_disable_extra=not extra,
+        is_disable_image=not image,
+        is_enable_media=media,
+        is_disable_pdf=not pdf,
+    )
+    setup(CONFIG)
+
+    task_queue = Queue()
+    out_queue = Queue()
+    pre_count = 0
+
+    for filename in files:
+        if os.path.isfile(filename):
+            total_file_size += os.stat(filename).st_size
+            task_queue.put(filename)
+            pre_count += 1
+    if pre_count == 0:
+        print(f"No files found", file=sys.stderr)
+        return bad_files
+    print(f"Checking {pre_count} files", file=sys.stderr)
+
+    processes = []
+    for i in range(CONFIG.threads):
+        p = Process(target=worker, args=(task_queue, out_queue, CONFIG))
+        p.start()
+        processes.append(p)
+
+    # consume the outcome
+    pbar = tqdm(total=total_file_size, unit="B", unit_scale=True)
+    try:
+        for j in range(pre_count):
+            count += 1
+            is_success = out_queue.get(block=True, timeout=CONFIG.timeout + 0.05 if CONFIG.timeout else None)
+            file_size = is_success[1][2]
+            pbar.update(file_size)
+
+            if not is_success[0]:
+                check_outcome_detail = is_success[1]
+                count_bad += 1
+                bad_files[check_outcome_detail[0]] = check_outcome_detail[1]
+                pbar.write(
+                    f"Bad file:{check_outcome_detail[0]}, "
+                    f"error detail:{check_outcome_detail[1]}, "
+                    f"size[bytes]:{check_outcome_detail[2]}",
+                    file=sys.stderr
+                )
+    except Empty as e:
+        print(
+            "Waiting other results for too much time, "
+            "perhaps you have to raise the timeout",
+            str(e),
+            file=sys.stderr
+        )
+    finally:
+        for p in processes:
+            p.terminate()
+        pbar.close()
+    if bad_files:
+        print(f"Found {len(bad_files)} bad files", file=sys.stderr)
+    return bad_files
 
 
 def main():
@@ -486,8 +572,7 @@ def main():
 
             is_success = out_queue.get(block=True, timeout=CONFIG.timeout+2 if CONFIG.timeout else None)
             file_size = is_success[1][2]
-            if file_size != 'NA':
-                total_file_size += file_size
+            total_file_size += file_size
 
             if not is_success[0]:
                 check_outcome_detail = is_success[1]

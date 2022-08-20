@@ -16,3 +16,4 @@ Wand
 filetype
 pyheif
 psutil
+tqdm
