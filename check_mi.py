@@ -56,20 +56,20 @@ AUDIO_EXTENSIONS = ['mp3', 'mp2']
 MEDIA_EXTENSIONS = []
 
 EXTENSION_MIMETYPES = {
-    'jpg': 'image/jpeg',
-    'jpeg': 'image/jpeg',
-    'png': 'image/png',
-    'gif': 'image/gif',
-    'tif': 'image/tiff',
-    'tiff': 'image/tiff',
-    'psd': 'image/vnd.adobe.photoshop',
-    'heic': 'image/heic',
-    'mov': 'video/quicktime',
-    'mp4': 'video/mp4',
-    'mp3': 'audio/mpeg',
-    'm4a': 'audio/m4a',
-    'wav': 'audio/wav',
-    'pdf': 'application/pdf',
+    "jpg": {"image/jpeg"},
+    "jpeg": {"image/jpeg"},
+    "png": {"image/png"},
+    "gif": {"image/gif"},
+    "tif": {"image/tiff"},
+    "tiff": {"image/tiff"},
+    "psd": {"image/vnd.adobe.photoshop"},
+    "heic": {"image/heic"},
+    "mov": {"video/quicktime", "video/mp4"},
+    "mp4": {"video/mp4"},
+    "mp3": {"audio/mpeg"},
+    "m4a": {"audio/m4a"},
+    "wav": {"audio/wav"},
+    "pdf": {"application/pdf"},
 }
 
 CONFIG = None
@@ -175,7 +175,7 @@ def check_filetype(filename):
     file_lowercase = filename.lower()
     file_ext = os.path.splitext(file_lowercase)[1][1:]
     file_type = filetype.guess(filename).mime
-    if file_ext in EXTENSION_MIMETYPES and file_type != EXTENSION_MIMETYPES[file_ext]:
+    if file_ext in EXTENSION_MIMETYPES and file_type not in EXTENSION_MIMETYPES[file_ext]:
         raise Exception('Bad file type: expected: '+EXTENSION_MIMETYPES[file_ext]+', got: '+file_type)
 
 
