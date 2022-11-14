@@ -65,7 +65,7 @@ EXTENSION_MIMETYPES = {
     "psd": {"image/vnd.adobe.photoshop"},
     "heic": {"image/heic"},
     "mov": {"video/quicktime", "video/mp4"},
-    "mp4": {"video/mp4"},
+    "mp4": {"video/mp4", "video/quicktime"},
     "mp3": {"audio/mpeg"},
     "m4a": {"audio/m4a"},
     "wav": {"audio/wav"},
