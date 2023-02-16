@@ -72,7 +72,17 @@ EXTENSION_MIMETYPES = {
     "pdf": {"application/pdf"},
 }
 
-CONFIG = None
+CONFIG = Namespace(
+    timeout=120,
+    threads=1,
+    zero_detect=0,
+    error_detect='default',
+    strict_level=1,
+    is_disable_extra=False,
+    is_disable_image=False,
+    is_enable_media=False,
+    is_disable_pdf=False,
+)
 
 import textwrap as _textwrap
 
@@ -174,9 +184,10 @@ def setup(configuration):
 def check_filetype(filename):
     file_lowercase = filename.lower()
     file_ext = os.path.splitext(file_lowercase)[1][1:]
-    file_type = filetype.guess(filename).mime
+    file_type = filetype.guess(filename)
+    file_type = file_type.mime if file_type else None
     if file_ext in EXTENSION_MIMETYPES and file_type not in EXTENSION_MIMETYPES[file_ext]:
-        raise Exception('Bad file type: expected: '+EXTENSION_MIMETYPES[file_ext]+', got: '+file_type)
+        raise Exception('Bad file type: expected: ' + str(EXTENSION_MIMETYPES[file_ext]) + ', got: ' + str(file_type))
 
 
 def pil_check(filename):
@@ -191,7 +202,7 @@ def pil_check(filename):
     # f = io.BytesIO()
     # img.save(f, "BMP")
     # f.close()
-    img.transpose(PIL.Image.FLIP_LEFT_RIGHT)
+    img.transpose(ImageP.FLIP_LEFT_RIGHT)
     img.close()
 
 

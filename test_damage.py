@@ -17,8 +17,9 @@ __status__ = "Beta"
 import shutil
 import os
 import random
-import check_mi
 import sys
+
+from . import check_mi
 
 
 def damage_file(filename, offset, size, full_noise=False):
