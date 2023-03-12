@@ -72,18 +72,6 @@ EXTENSION_MIMETYPES = {
     "pdf": {"application/pdf"},
 }
 
-CONFIG = Namespace(
-    timeout=120,
-    threads=1,
-    zero_detect=0,
-    error_detect='default',
-    strict_level=1,
-    is_disable_extra=False,
-    is_disable_image=False,
-    is_enable_media=False,
-    is_disable_pdf=False,
-)
-
 import textwrap as _textwrap
 
 
@@ -359,7 +347,7 @@ def check_file(filename, error_detect='default', strict_level=0, zero_detect=0, 
         check_filetype(filename)
 
         if zero_detect > 0:
-            check_zeros(filename, CONFIG.zero_detect)
+            check_zeros(filename, zero_detect)
 
         if file_ext in PIL_EXTENSIONS:
             if strict_level in [1, 2]:
@@ -411,7 +399,13 @@ def kill_child_processes(parent_pid, sig=signal.SIGTERM):
 
 
 def subworker(filename, out_queue, CONFIG):
-    is_success = check_file(filename, CONFIG.error_detect, strict_level=CONFIG.strict_level, zero_detect=CONFIG.zero_detect)
+    is_success = check_file(
+        filename,
+        CONFIG.error_detect,
+        strict_level=CONFIG.strict_level,
+        zero_detect=CONFIG.zero_detect,
+        ffmpeg_threads=CONFIG.threads,
+    )
     out_queue.put(is_success)
 
 
@@ -521,7 +515,6 @@ def check_files(
 
 
 def main():
-    global CONFIG
     if not is_pil_simd():
         print("********WARNING*******************************************************")
         print("You are using Python Pillow PIL module and not the Pillow-SIMD module.")
@@ -537,7 +530,13 @@ def main():
 
     if os.path.isfile(check_path):
         # manage single file check
-        is_success = check_file(check_path, CONFIG.error_detect)
+        is_success = check_file(
+            check_path,
+            CONFIG.error_detect,
+            strict_level=CONFIG.strict_level,
+            zero_detect=CONFIG.zero_detect,
+            ffmpeg_threads=CONFIG.threads,
+        )
         if not is_success[0]:
             check_outcome_detail = is_success[1]
             log_check_outcome(check_outcome_detail)
