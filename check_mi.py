@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import warnings
 from queue import Empty
-from multiprocessing import Pool, Queue, Process
+from multiprocessing import Queue, Process
 
 __author__ = "Fabiano Tarlao"
 __copyright__ = "Copyright 2018, Fabiano Tarlao"
@@ -15,6 +14,7 @@ __status__ = "Beta"
 import sys
 import os
 import time
+import textwrap
 import PIL
 from PIL import Image as ImageP
 from wand.image import Image as ImageW
@@ -72,8 +72,6 @@ EXTENSION_MIMETYPES = {
     "pdf": {"application/pdf"},
 }
 
-import textwrap as _textwrap
-
 
 class MultilineFormatter(argparse.HelpFormatter):
     def _fill_text(self, text, width, indent):
@@ -81,7 +79,7 @@ class MultilineFormatter(argparse.HelpFormatter):
         paragraphs = text.split('|n ')
         multiline_text = ''
         for paragraph in paragraphs:
-            formatted_paragraph = _textwrap.fill(paragraph, width, initial_indent=indent,
+            formatted_paragraph = textwrap.fill(paragraph, width, initial_indent=indent,
                                                  subsequent_indent=indent) + '\n\n'
             multiline_text = multiline_text + formatted_paragraph
         return multiline_text
@@ -469,7 +467,7 @@ def check_files(
             task_queue.put(filename)
             pre_count += 1
     if pre_count == 0:
-        print(f"No files found", file=sys.stderr)
+        print("No files found", file=sys.stderr)
         return bad_files
     print(f"Checking {pre_count} files", file=sys.stderr)
 
