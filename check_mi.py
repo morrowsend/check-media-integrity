@@ -18,7 +18,7 @@ import time
 import PIL
 from PIL import Image as ImageP
 from wand.image import Image as ImageW
-import PyPDF2
+import pypdf
 import csv
 import ffmpeg
 import pyheif
@@ -222,8 +222,8 @@ def heif_check(filename):
 def pypdf_check(filename):
     # PDF format
     # Check with specific library
-    pdfobj = PyPDF2.PdfFileReader(open(filename, "rb"))
-    pdfobj.getDocumentInfo()
+    pdfobj = pypdf.PdfReader(filename)
+    pdfobj.metadata
     # Check with imagemagick
     magick_check(filename, False)
 

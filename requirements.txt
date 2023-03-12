@@ -11,7 +11,7 @@ Pillow ; platform_machine=="aarch64"
 Pillow ; platform_machine=="armv8b"
 Pillow ; platform_machine=="armv8l"
 Pillow ; platform_machine=="arm64"
-PyPDF2
+pypdf>=3.0.0
 Wand
 filetype
 pyheif
