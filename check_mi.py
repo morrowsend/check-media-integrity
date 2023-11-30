@@ -23,6 +23,7 @@ import csv
 import ffmpeg
 import pyheif
 import filetype
+from filetype.utils import get_bytes
 import argparse
 from argparse import Namespace
 from subprocess import Popen, PIPE
@@ -171,7 +172,21 @@ def check_filetype(filename):
     file_lowercase = filename.lower()
     file_ext = os.path.splitext(file_lowercase)[1][1:]
     file_type = filetype.guess(filename)
-    file_type = file_type.mime if file_type else None
+
+    # handle exceptions to filetype rules
+    if file_type is None:
+        if file_ext == "mov":
+            buf = get_bytes(filename)
+            tag = buf[4:8].decode(errors='ignore')
+            if tag == "wide":
+                file_type = "video/quicktime"
+            else:
+                raise Exception('Unknown .mov file type')
+        else:
+            raise Exception('Unknown file type')
+    else:
+        file_type = file_type.mime if file_type else None
+
     if file_ext in EXTENSION_MIMETYPES and file_type not in EXTENSION_MIMETYPES[file_ext]:
         raise Exception('Bad file type: expected: ' + str(EXTENSION_MIMETYPES[file_ext]) + ', got: ' + str(file_type))
 
