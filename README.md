@@ -1,3 +1,30 @@
+#MY UPDATED INFO:
+Firstly, to install, I had to install pip-simd like this:
+
+pillow-simd kept failing to install via pip. I tried on windows to use the command
+
+CC="cc -mavx2" pip install -U --force-reinstall pillow-simd  
+
+as in pillow-simd's instructions but that failed, so I installed it as such:
+
+pip install pillow-simd --global-option="build_ext" --global-option="--enable-zlib" --global-option="--enable-jpeg"
+
+This caused the app not to work for JPEGS, so I then installed regular pillow: 
+pip install pillow
+
+and it mostly works. 
+
+pip install ffmpeg-python future Pillow-SIMD PyPDF2 Wand
+
+for the rest, though I still had to do ffmpeg-python by itself.
+
+Next, I found that in order to ouput a CSV file, that file must already exist. I shoul dfix this, but I don't care to right now.
+
+This apparently ignores errors in mkv files. I used avidemux to snip the Bee video shorter, then in a hex editor i went inside and deleted a random chunk.  The video stops midway in VLC, however it is not detected as having any errors here. I did the same with an MP4 of the Bee video and it indeed detects as broken.
+
+
+
+
 # check-media-integrity
 
 - Converted from Python2.7 to Python 3 (3.8) .. comes with bugfixes :-)
